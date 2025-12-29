@@ -10,16 +10,23 @@
 		}
 		/* ====== 全局重置（避免奇怪缩放） ====== */
 		html, body {
-			margin: 0;
-			padding: 0;
+			margin: 10px;
+			padding: 10px;
+			height: 50px;
+			width: 50px;
 			background: #C1BAB0;
 			color: #ffffff;
 			zoom: 100%; /* 防止浏览器缩放作妖 */
 		}
 
+		@font-face {
+			font-family: "Press Start 2P";
+			src: url("./fonts/PressStart2P.woff2") format("woff2");
+			font-display: swap;
+		}
+
 		/* ====== 像素字体核心类 ====== */
 		.pixel-text {
-			/* 核心：像素字体必须排第一 */
 			font-family: "Press Start 2P", monospace !important;
 			/* 只能用整数倍 */
 			font-size: 32px;
@@ -27,7 +34,7 @@
 			/* 禁用字体平滑（关键） */
 			-webkit-font-smoothing: none;
 			-moz-osx-font-smoothing: grayscale;
-			font-smooth: never;
+			/*font-smooth: never;*/
 			/* 避免被“优化”的细节 */
 			font-weight: normal;
 			letter-spacing: 0;
@@ -58,24 +65,21 @@
 
 		/* ====== 调试用：防止字体 fallback ====== */
 		.pixel-debug {
-			outline: 1px dashed red;
+			outline: 1px dashed tomato;
 		}
-
+		.button-size {
+			height:20px
+		}
+		
 	</style>
+	<script type="module" src="src/JS/Main.js">
+		
+	</script>
 </head>
 <body>
 	<link rel="stylesheet"
-		  href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
-
-	<div class="pixel-text pixel-shadow">
-		Playing The Game!!!
-	</div>
-
-	<div class="pixel-text x2 pixel-ui pixel-shadow">
-		Continue
-		<br>
-		Exit
-	</div>
-
-
+		href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+	<button id="wordBtn" class="body"></button>
+	<div class="pixel-text x2 pixel-shadow">Continue</div>
 </body>
+</html>
