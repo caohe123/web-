@@ -7,6 +7,8 @@
 	<style>
 		canvas {
 			display: block;
+			image-rendering: pixelated;
+    		image-rendering: crisp-edges;
 		}
 		/* ====== 全局重置（避免奇怪缩放） ====== */
 		html, body {
@@ -72,14 +74,14 @@
 		}
 		
 	</style>
-	<script type="module" src="src/JS/Main.js">
-		
-	</script>
+
 </head>
 <body>
+	<canvas id="gameCanvas"></canvas>
 	<link rel="stylesheet"
 		href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
-	<button id="wordBtn" class="body"></button>
-	<div class="pixel-text x2 pixel-shadow">Continue</div>
+	<script type="module" src="src/JS/Main.js"></script>
+	<div id="pixel-text x2 pixel-shadow"> </div>
+
 </body>
 </html>
