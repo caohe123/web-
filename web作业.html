@@ -224,8 +224,8 @@
                 <li>方向键 ↑↓←→ 控制角色移动（可直接穿过字母）</li>
                 <li>空格键：优先抓取脚下箱子，若无则抓取周围箱子</li>
                 <li>抓取的箱子会跟随角色移动</li>
+                <li>当角色与箱子重合时，角色显示优先（箱子被遮挡）</li>
                 <li>按目标单词顺序将字母箱子放入黄色目标区</li>
-                <li>全部字母按顺序放对即可通关</li>
             </ul>
         </div>
 
@@ -305,16 +305,15 @@
                 letterBoxes[grabbedBoxKey].grabbed = true;
                 isGrabbing = true;
                 
-                // 视觉反馈：即使被玩家遮挡，也添加 grabbed 样式
+                // 视觉反馈
                 gameCells[playerPos.y][playerPos.x].classList.add("grabbed");
-                return; // 已抓取成功，直接结束
+                return; 
             }
 
-            // 2. 【备选】脚下没有箱子，再搜索周围
+            // 2. 【备选】搜索周围
             const nearbyBoxes = getNearbyBoxes(playerPos, GAME_CONFIG.grabRange);
             if (nearbyBoxes.length === 0) return;
 
-            // 抓取最近的一个（或者是搜索到的第一个）
             grabbedBoxKey = nearbyBoxes[0];
             letterBoxes[grabbedBoxKey].grabbed = true;
             isGrabbing = true;
@@ -329,7 +328,13 @@
             isGrabbing = false;
 
             const [x, y] = grabbedBoxKey.split(',').map(Number);
-            gameCells[y][x].classList.remove("grabbed");
+            
+            if (playerPos.x !== x || playerPos.y !== y) {
+                gameCells[y][x].classList.remove("grabbed");
+            } else {
+                // 玩家站在这，保持 player 样式，但数据已放下
+                gameCells[y][x].classList.remove("grabbed");
+            }
 
             checkTargetArea(grabbedBoxKey);
             grabbedBoxKey = null;
@@ -341,9 +346,6 @@
             for (let y = py - range; y <= py + range; y++) {
                 for (let x = px - range; x <= px + range; x++) {
                     if (x < 0 || x >= GAME_CONFIG.cols || y < 0 || y >= GAME_CONFIG.rows) continue;
-                    // 注意：这里已经移除了排除自身位置的逻辑，或者保留也可以，
-                    // 因为 grabBox 优先检查了自身，这里只作为备用搜索。
-                    // 为了代码整洁，这里保留排除自身，避免重复检查。
                     if (x === px && y === py) continue; 
 
                     const key = `${x},${y}`;
@@ -409,7 +411,9 @@
                 const target = targetPoints[targetKey];
                 if (box.letter === target.letter && collectedLetters.length === target.index) {
                     collectedLetters.push(box.letter);
-                    gameCells[y][x].classList.add("on-target");
+                    if (playerPos.x !== x || playerPos.y !== y) {
+                        gameCells[y][x].classList.add("on-target");
+                    }
                     if (collectedLetters.join('') === currentWord) {
                         clearInterval(timeCounter);
                         calculateScore();
@@ -465,15 +469,14 @@
                         cell.classList.add('target');
                         cell.textContent = '?';
                     }
-                    if (x === playerPos.x && y === playerPos.y) {
-                        cell.classList.remove('floor', 'target');
-                        cell.classList.add('player');
-                        cell.textContent = '😀';
-                    }
                     const boxKey = `${x},${y}`;
                     if (letterBoxes[boxKey]) {
                         cell.classList.add('letter-box');
                         cell.textContent = letterBoxes[boxKey].letter;
+                    }
+                    if (x === playerPos.x && y === playerPos.y) {
+                        cell.className = 'cell player';
+                        cell.textContent = '😀';
                     }
                     gameBoard.appendChild(cell);
                     gameCells[y][x] = cell;
@@ -492,84 +495,49 @@
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
 
-            // 边界检测
             if (newX < 0 || newX >= GAME_CONFIG.cols || newY < 0 || newY >= GAME_CONFIG.rows) return;
 
-            // 移动玩家
             updatePlayerPosition(newX, newY);
 
-            // 如果正在抓取箱子，同步移动箱子
             if (isGrabbing && grabbedBoxKey) {
                 moveGrabbedBox(dx, dy);
             }
         }
 
-        // 更新玩家位置
         function updatePlayerPosition(newX, newY) {
             const oldX = playerPos.x;
             const oldY = playerPos.y;
             const oldKey = `${oldX},${oldY}`;
             const oldCell = gameCells[oldY][oldX];
 
-            // 1. 清除旧位置的玩家样式
             oldCell.classList.remove('player');
-            // 注意：不要清空 grabbed 状态，因为箱子可能还在那里被抓着
-            if (!isGrabbing || grabbedBoxKey !== oldKey) {
-                oldCell.textContent = '';
-            }
+            oldCell.textContent = '';
 
-            // 检查旧位置是否有字母箱子，如果有则复原
             if (letterBoxes[oldKey]) {
-                // 恢复箱子显示
                 oldCell.classList.add('letter-box');
-                
-                // 如果文字被清空了（之前没抓取或刚放下），恢复文字
-                if (oldCell.textContent === '') {
-                    oldCell.textContent = letterBoxes[oldKey].letter;
-                }
-
-                // 恢复箱子特殊状态
-                if (letterBoxes[oldKey].grabbed) {
-                    oldCell.classList.add('grabbed');
-                }
-                // 如果该箱子已在目标区且已收集正确，恢复绿色
+                oldCell.textContent = letterBoxes[oldKey].letter;
+                if (letterBoxes[oldKey].grabbed) oldCell.classList.add('grabbed');
                 if (targetPoints[oldKey] && collectedLetters.includes(letterBoxes[oldKey].letter)) {
                     oldCell.classList.add('on-target');
                 }
             } else {
-                // 没有箱子，恢复地形
                 if (targetPoints[oldKey]) {
                     oldCell.classList.add('target');
                     oldCell.textContent = '?';
                 } else {
                     oldCell.classList.add('floor');
-                    oldCell.textContent = '';
                 }
             }
 
-            // 2. 设置新位置为玩家
             const newCell = gameCells[newY][newX];
-            
-            // 检查新位置是否有箱子被抓取着（如果箱子也在这个位置）
-            const newKey = `${newX},${newY}`;
-            const boxHere = letterBoxes[newKey];
+            newCell.className = 'cell player';
+            newCell.textContent = '😀';
 
-            // 先渲染箱子（如果存在）
-            if (boxHere && boxHere.grabbed) {
-                newCell.className = 'cell letter-box grabbed';
-                newCell.textContent = boxHere.letter;
-                // 再添加玩家样式
-                newCell.classList.add('player');
-            } else {
-                newCell.className = 'cell player';
-                newCell.textContent = '😀';
-            }
-
-            // 更新坐标
             playerPos.x = newX;
             playerPos.y = newY;
         }
 
+        // 移动被抓取的箱子 (修复数据丢失bug)
         function moveGrabbedBox(dx, dy) {
             const [boxX, boxY] = grabbedBoxKey.split(',').map(Number);
             const newBoxX = boxX + dx;
@@ -579,42 +547,43 @@
             if (newBoxX < 0 || newBoxX >= GAME_CONFIG.cols || newBoxY < 0 || newBoxY >= GAME_CONFIG.rows) return;
             if (letterBoxes[newBoxKey] && !letterBoxes[newBoxKey].grabbed) return;
 
+            // 【修复点】先保存当前箱子的字母内容，防止删除后丢失
+            const currentLetter = letterBoxes[grabbedBoxKey].letter;
+
+            // 恢复旧箱子位置
             const oldBoxCell = gameCells[boxY][boxX];
-            // 移除箱子样式，注意保留 player 如果在这个格子上
-            // 但实际上 updatePlayerPosition 已经处理了玩家视图，这里只需要处理箱子层
-            // 为了简化，我们在 updatePlayerPosition 后调用此函数，或者在此函数完全接管渲染
-            // 这里采用完全重写该格子的非玩家部分
-            
             oldBoxCell.classList.remove('letter-box', 'grabbed', 'on-target');
-            // 如果旧位置不是玩家当前位置，清空文字；如果是，文字由 updatePlayerPosition 管理（显示玩家）
+            
             if (boxX !== playerPos.x || boxY !== playerPos.y) {
                 oldBoxCell.textContent = '';
-            }
-            
-            if (targetPoints[grabbedBoxKey]) {
-                oldBoxCell.classList.add('target');
-                if (boxX !== playerPos.x || boxY !== playerPos.y) oldBoxCell.textContent = '?';
-            } else {
-                oldBoxCell.classList.add('floor');
-            }
-
-            const newBoxCell = gameCells[newBoxY][newBoxX];
-            // 新位置渲染箱子
-            // 如果新位置恰好也是玩家位置，我们需要让它们共存
-            newBoxCell.classList.add('letter-box', 'grabbed'); 
-            // CSS中 .player z-index 比 .letter-box 高，所以这里只添加样式，文字由 updatePlayerPosition 覆盖或者覆盖玩家文字
-            // 需求是玩家穿过，这里更新箱子数据
-            newBoxCell.textContent = letterBoxes[grabbedBoxKey].letter;
-            
-            if (targetPoints[newBoxKey]) {
-                newBoxCell.classList.add('on-target');
+                if (targetPoints[grabbedBoxKey]) {
+                    oldBoxCell.classList.add('target');
+                    oldBoxCell.textContent = '?';
+                } else {
+                    oldBoxCell.classList.add('floor');
+                }
             }
 
+            // 更新数据：删除旧位置，添加到新位置
             delete letterBoxes[grabbedBoxKey];
             letterBoxes[newBoxKey] = {
-                letter: newBoxCell.textContent,
+                letter: currentLetter, // 使用保存的字母
                 grabbed: true
             };
+            
+            // 渲染新箱子位置
+            const isPlayerHere = (newBoxX === playerPos.x && newBoxY === playerPos.y);
+
+            if (!isPlayerHere) {
+                const newBoxCell = gameCells[newBoxY][newBoxX];
+                newBoxCell.className = 'cell letter-box grabbed'; 
+                newBoxCell.textContent = currentLetter;
+                
+                if (targetPoints[newBoxKey]) {
+                    newBoxCell.classList.add('on-target');
+                }
+            }
+            
             grabbedBoxKey = newBoxKey;
         }
 
