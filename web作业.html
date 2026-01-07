@@ -3,631 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D字母闯关 - 纯净版</title>
+    <title>像素单词大作战 - 竞技版</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft Yahei", sans-serif;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: #f0f8ff;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'ZCOOL KuaiLe', sans-serif;
+            overflow: hidden;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
         }
 
         /* 开始界面 */
         #start-screen {
-            text-align: center;
-            padding: 50px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            max-width: 700px;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
 
         #start-screen h1 {
-            color: #2c3e50;
+            font-size: 56px;
+            color: #f1c40f;
+            text-shadow: 4px 4px #e67e22, 8px 8px #000;
             margin-bottom: 30px;
-            font-size: 36px;
         }
 
-        /* 游戏说明样式 */
-        #game-instructions {
+        .instruction-box {
+            background: #333;
+            border: 4px solid #fff;
+            padding: 20px 40px;
             text-align: left;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
             margin-bottom: 30px;
-            border-left: 4px solid #3498db;
+            box-shadow: 8px 8px 0px #000;
         }
 
-        #game-instructions h3 {
-            color: #3498db;
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-
-        #game-instructions ul {
-            list-style: none;
-            padding-left: 10px;
-        }
-
-        #game-instructions li {
-            margin: 8px 0;
-            color: #34495e;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        #game-instructions li::before {
-            content: "✓";
-            color: #2ecc71;
-            margin-right: 10px;
-            font-weight: bold;
-        }
-
-        .btn {
+        .btn-pixel {
             padding: 15px 40px;
-            margin: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        #start-btn {
-            background: #3498db;
+            font-size: 28px;
+            font-family: inherit;
+            background: #2ecc71;
             color: #fff;
+            border: 5px solid #000;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #27ae60;
         }
 
-        #start-btn:hover {
-            background: #2980b9;
-            transform: scale(1.05);
-        }
-
-        /* 游戏容器 */
+        /* 游戏主体 */
         #game-container {
             display: none;
-            text-align: center;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
         }
 
-        /* 游戏信息面板 */
-        #game-info {
-            background: #2c3e50;
-            color: #fff;
-            padding: 15px 30px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 18px;
-            min-width: 500px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .info-item {
-            margin: 0 10px;
-        }
-
-        #target-word {
-            color: #f1c40f;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* 游戏面板 */
-        #game-board {
-            display: grid;
-            grid-template-columns: repeat(15, 40px);
-            grid-template-rows: repeat(12, 40px);
-            gap: 2px;
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
-        }
-
-        /* 格子样式 */
-        .cell {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
+        #timer-bar {
+            background: #c0392b;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #fff;
-            user-select: none;
+            font-size: 28px;
+            border-bottom: 4px solid #000;
         }
 
-        .floor {
-            background: #bdc3c7;
+        #main-game {
+            display: flex;
+            flex: 1;
         }
 
-        /* 目标区 */
-        .target {
-            background: #f1c40f;
-            border: 2px dashed #e67e22;
-            color: #d35400;
+        .player-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #222;
         }
 
-        /* 玩家 */
-        .player {
-            background: #3498db;
-            border-radius: 50%;
-            z-index: 10;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        #center-ui {
+            width: 200px;
+            background: #333;
+            border-left: 4px solid #000;
+            border-right: 4px solid #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
         }
 
-        /* 字母箱子 */
+        .word-box {
+            background: #000; border: 2px solid #f1c40f;
+            padding: 10px; width: 100%; margin: 10px 0;
+            text-align: center;
+        }
+
+        .word-text { font-size: 20px; color: #fff; text-shadow: 2px 2px #e67e22; letter-spacing: 2px;}
+        .score-val { font-size: 40px; color: #2ecc71; text-shadow: 3px 3px #000; }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(11, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 2px;
+            background: #000;
+            border: 4px solid #444;
+        }
+
+        .cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .floor { background: #333; }
+        
         .letter-box {
             background: #e74c3c;
-            border-radius: 4px;
-            transition: all 0.2s ease;
+            border: 3px solid #000;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.3), 2px 2px 0px #000;
+            color: white;
             z-index: 5;
         }
 
-        .letter-box.grabbed {
-            background: #9b59b6;
-            box-shadow: 0 0 10px #9b59b6;
-            z-index: 15;
+        .player {
+            z-index: 10; font-size: 26px;
+            border: 3px solid #000;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.3);
         }
+        .p1-color { background: #3498db; }
+        .p2-color { background: #9b59b6; }
 
-        .letter-box.on-target {
-            background: #2ecc71;
-        }
+        .target { background: #444; border: 2px dashed #555; color: #777; font-size: 14px; }
+        .on-target { background: #2ecc71 !important; border: 3px solid #000 !important; color: white !important; font-size: 20px; }
 
-        /* 弹窗样式 */
-        #next-level-modal, #success-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
-            text-align: center;
-            display: none;
-            z-index: 100;
-        }
-
-        #success-modal h2 {
-            color: #27ae60;
-            margin-bottom: 20px;
-            font-size: 32px;
-        }
-
-        #final-score {
-            font-size: 28px;
-            color: #e67e22;
-            margin: 15px 0;
+        .modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; color: #000; padding: 40px; border: 8px solid #000; text-align: center;
+            z-index: 2000; display: none;
         }
     </style>
 </head>
 <body>
-    <!-- 开始界面 -->
+
     <div id="start-screen">
-        <h1>2D字母闯关 - 纯净版</h1>
-        
-        <div id="game-instructions">
-            <h3>🎮 游戏玩法说明</h3>
-            <ul>
-                <li>方向键 ↑↓←→ 控制角色移动（可直接穿过字母）</li>
-                <li>空格键：优先抓取脚下箱子，若无则抓取周围箱子</li>
-                <li>抓取的箱子会跟随角色移动</li>
-                <li>当角色与箱子重合时，角色显示优先（箱子被遮挡）</li>
-                <li>按目标单词顺序将字母箱子放入黄色目标区</li>
-            </ul>
+        <h1>字母大对战</h1>
+        <div class="instruction-box">
+            <p>🕹️ <b>P1 (左):</b> WASD 移动</p>
+            <p>🕹️ <b>P2 (右):</b> 方向键 移动</p>
+            <p>💡 <b>规则:</b> 推入目标单词对应的位置即可（不限顺序）</p>
+            <p>⚠️ <b>提示:</b> 字母现在生成更分散，时间更长，尽情对战！</p>
         </div>
-
-        <button id="start-btn" class="btn">开始游戏</button>
+        <button class="btn-pixel" onclick="startGame()">进入对战</button>
     </div>
 
-    <!-- 游戏容器 -->
     <div id="game-container">
-        <div id="game-info">
-            <div class="info-item">关卡：<span id="level">1</span></div>
-            <div class="info-item">目标：<span id="target-word">APPLE</span></div>
-            <div class="info-item">分数：<span id="score">0</span></div>
-            <div class="info-item">用时：<span id="time">0</span>s</div>
+        <div id="timer-bar">剩余时间: <span id="time-left">120</span>s</div>
+        <div id="main-game">
+            <div class="player-side"><div id="p1-board" class="game-board"></div></div>
+            <div id="center-ui">
+                <div>
+                    <div style="color:#f1c40f; font-size:12px;">P1 目标</div>
+                    <div class="word-box"><div id="p1-word-display" class="word-text">-</div></div>
+                    <div id="p1-score" class="score-val">0</div>
+                </div>
+                <div style="border-top: 2px solid #555; width: 80%;"></div>
+                <div>
+                    <div style="color:#f1c40f; font-size:12px;">P2 目标</div>
+                    <div class="word-box"><div id="p2-word-display" class="word-text">-</div></div>
+                    <div id="p2-score" class="score-val">0</div>
+                </div>
+            </div>
+            <div class="player-side"><div id="p2-board" class="game-board"></div></div>
         </div>
-        <div id="game-board"></div>
     </div>
 
-    <!-- 下一关弹窗 -->
-    <div id="next-level-modal">
-        <h3>恭喜通关本关！</h3>
-        <div>本关得分：<span id="next-score">0</span></div>
-        <button id="next-btn" class="btn">下一关</button>
-    </div>
-
-    <!-- 通关弹窗 -->
-    <div id="success-modal">
-        <h2>恭喜通关所有关卡！🎉</h2>
-        <div>最终得分：<span id="final-score">0</span></div>
-        <button id="restart-btn" class="btn">重新开始</button>
+    <div id="result-modal" class="modal">
+        <h1 id="winner-msg">游戏结束</h1>
+        <p id="final-stats" style="margin: 20px 0; font-size: 24px;"></p>
+        <button class="btn-pixel" onclick="location.reload()" style="font-size:20px;">再来一局</button>
     </div>
 
     <script>
-        // ===================== 核心配置 =====================
-        const WORD_LIBRARY = [
-            { word: "APPLE", length: 5 },
-            { word: "BANANA", length: 6 },
-            { word: "ORANGE", length: 6 },
-            { word: "GRAPE", length: 5 },
-            { word: "PEAR", length: 4 }
-        ];
-
-        const GAME_CONFIG = {
-            rows: 12,
-            cols: 15,
-            playerStartPos: { x: 7, y: 5 },
-            grabRange: 1,
-            targetAreaY: 2
+        const WORD_POOL = {
+            5: ["APPLE", "BOARD", "CLOCK", "DREAM", "ENTRY", "FIELD", "GLASS", "HEART", "IMAGE", "JUDGE"],
+            6: ["ACTION", "BRIDGE", "CAMERA", "DANGER", "ENERGY", "FUTURE", "GARDEN", "HEALTH", "MEMORY", "NATURE"],
+            7: ["ABILITY", "BEYOND", "CENTRAL", "DISPLAY", "EXAMPLE", "HISTORY", "JUSTICE", "LIBRARY", "MESSAGE", "PERFECT"]
         };
 
-        // ===================== 全局变量 =====================
-        let currentLevel = 1;
-        let totalScore = 0;
-        let startTime = 0;
-        let timeCounter = null;
-        let currentTime = 0;
+        const CONFIG = { rows: 9, cols: 11, gameTime: 120 };
+        let players = {
+            p1: { pos: {x:5, y:4}, boxes: {}, word: "", finishedIndices: [], score: 0, boardId: 'p1-board' },
+            p2: { pos: {x:5, y:4}, boxes: {}, word: "", finishedIndices: [], score: 0, boardId: 'p2-board' }
+        };
+        let timeLeft = CONFIG.gameTime;
+        let gameActive = false;
+        let matchLength = 6;
 
-        let playerPos = {};
-        let currentWord = "";
-        let currentWordLength = 0;
-        let collectedLetters = [];
-        let targetPoints = {};
-        let gameCells = [];
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            matchLength = [5, 6, 7][Math.floor(Math.random() * 3)];
+            gameActive = true;
+            initPlayer('p1');
+            initPlayer('p2');
 
-        let letterBoxes = {}; 
-        let isGrabbing = false;
-        let grabbedBoxKey = null;
-
-        // ===================== 核心功能：抓取/释放 =====================
-        function grabBox() {
-            if (isGrabbing) return;
-
-            const currentKey = `${playerPos.x},${playerPos.y}`;
-
-            // 1. 【优先】检查脚下是否有箱子
-            if (letterBoxes[currentKey] && !letterBoxes[currentKey].grabbed) {
-                grabbedBoxKey = currentKey;
-                letterBoxes[grabbedBoxKey].grabbed = true;
-                isGrabbing = true;
-                
-                // 视觉反馈
-                gameCells[playerPos.y][playerPos.x].classList.add("grabbed");
-                return; 
-            }
-
-            // 2. 【备选】搜索周围
-            const nearbyBoxes = getNearbyBoxes(playerPos, GAME_CONFIG.grabRange);
-            if (nearbyBoxes.length === 0) return;
-
-            grabbedBoxKey = nearbyBoxes[0];
-            letterBoxes[grabbedBoxKey].grabbed = true;
-            isGrabbing = true;
-
-            const [x, y] = grabbedBoxKey.split(',').map(Number);
-            gameCells[y][x].classList.add("grabbed");
-        }
-
-        function releaseBox() {
-            if (!isGrabbing || !grabbedBoxKey) return;
-            letterBoxes[grabbedBoxKey].grabbed = false;
-            isGrabbing = false;
-
-            const [x, y] = grabbedBoxKey.split(',').map(Number);
-            
-            if (playerPos.x !== x || playerPos.y !== y) {
-                gameCells[y][x].classList.remove("grabbed");
-            } else {
-                // 玩家站在这，保持 player 样式，但数据已放下
-                gameCells[y][x].classList.remove("grabbed");
-            }
-
-            checkTargetArea(grabbedBoxKey);
-            grabbedBoxKey = null;
-        }
-
-        function getNearbyBoxes(pos, range) {
-            const boxes = [];
-            const { x: px, y: py } = pos;
-            for (let y = py - range; y <= py + range; y++) {
-                for (let x = px - range; x <= px + range; x++) {
-                    if (x < 0 || x >= GAME_CONFIG.cols || y < 0 || y >= GAME_CONFIG.rows) continue;
-                    if (x === px && y === py) continue; 
-
-                    const key = `${x},${y}`;
-                    if (letterBoxes[key] && !letterBoxes[key].grabbed) {
-                        boxes.push(key);
-                    }
-                }
-            }
-            return boxes;
-        }
-
-        function generateLetterPositions() {
-            letterBoxes = {};
-            const letters = currentWord.split('');
-            const candidatePositions = [];
-            const playerArea = [
-                {x: 4, y: 4}, {x: 5, y: 6}, {x: 8, y: 4}, {x: 9, y: 6},
-                {x: 3, y: 7}, {x: 10, y: 7}, {x: 6, y: 3}, {x: 7, y: 8}
-            ];
-            const targetArea = getTargetArea();
-            targetArea.forEach(pos => {
-                candidatePositions.push({x: pos.x - 2, y: pos.y + 2});
-                candidatePositions.push({x: pos.x + 2, y: pos.y + 2});
-                candidatePositions.push({x: pos.x, y: pos.y + 3});
-            });
-
-            const allPositions = [...playerArea, ...targetArea, ...candidatePositions];
-            const uniquePositions = Array.from(
-                new Map(allPositions.map(pos => [`${pos.x},${pos.y}`, pos])).values()
-            );
-
-            letters.forEach((letter, index) => {
-                const pos = uniquePositions[index % uniquePositions.length];
-                const key = `${pos.x},${pos.y}`;
-                letterBoxes[key] = {
-                    letter: letter,
-                    grabbed: false
-                };
-            });
-        }
-
-        function getTargetArea() {
-            targetPoints = {};
-            const startX = Math.floor((GAME_CONFIG.cols - currentWordLength) / 2);
-            const area = [];
-            for (let i = 0; i < currentWordLength; i++) {
-                const x = startX + i;
-                const y = GAME_CONFIG.targetAreaY;
-                area.push({x, y});
-                targetPoints[`${x},${y}`] = {
-                    letter: currentWord[i],
-                    index: i
-                };
-            }
-            return area;
-        }
-
-        function checkTargetArea(boxKey) {
-            const [x, y] = boxKey.split(',').map(Number);
-            const targetKey = `${x},${y}`;
-            if (targetPoints[targetKey]) {
-                const box = letterBoxes[boxKey];
-                const target = targetPoints[targetKey];
-                if (box.letter === target.letter && collectedLetters.length === target.index) {
-                    collectedLetters.push(box.letter);
-                    if (playerPos.x !== x || playerPos.y !== y) {
-                        gameCells[y][x].classList.add("on-target");
-                    }
-                    if (collectedLetters.join('') === currentWord) {
-                        clearInterval(timeCounter);
-                        calculateScore();
-                    }
-                }
-            }
-        }
-
-        function calculateScore() {
-            const baseScore = 1000;
-            const speedScore = Math.max(0, 800 - currentTime * 10);
-            const levelScore = baseScore + speedScore;
-            totalScore += levelScore;
-            document.getElementById('score').textContent = totalScore;
-            if (currentLevel >= WORD_LIBRARY.length) {
-                document.getElementById('final-score').textContent = totalScore;
-                setTimeout(() => document.getElementById('success-modal').style.display = 'block', 500);
-            } else {
-                document.getElementById('next-score').textContent = levelScore;
-                setTimeout(() => document.getElementById('next-level-modal').style.display = 'block', 500);
-            }
-        }
-
-        function initGame(level = 1) {
-            collectedLetters = [];
-            targetPoints = {};
-            gameCells = [];
-            currentTime = 0;
-            isGrabbing = false;
-            grabbedBoxKey = null;
-            currentLevel = level;
-            const wordData = WORD_LIBRARY[level - 1];
-            currentWord = wordData.word;
-            currentWordLength = wordData.length;
-            document.getElementById('level').textContent = currentLevel;
-            document.getElementById('target-word').textContent = currentWord;
-            document.getElementById('time').textContent = currentTime;
-            document.getElementById('score').textContent = totalScore;
-            playerPos = {...GAME_CONFIG.playerStartPos};
-            generateLetterPositions();
-            getTargetArea();
-            const gameBoard = document.getElementById('game-board');
-            gameBoard.innerHTML = '';
-            for (let y = 0; y < GAME_CONFIG.rows; y++) {
-                gameCells[y] = [];
-                for (let x = 0; x < GAME_CONFIG.cols; x++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell floor';
-                    cell.dataset.x = x;
-                    cell.dataset.y = y;
-                    if (targetPoints[`${x},${y}`]) {
-                        cell.classList.remove('floor');
-                        cell.classList.add('target');
-                        cell.textContent = '?';
-                    }
-                    const boxKey = `${x},${y}`;
-                    if (letterBoxes[boxKey]) {
-                        cell.classList.add('letter-box');
-                        cell.textContent = letterBoxes[boxKey].letter;
-                    }
-                    if (x === playerPos.x && y === playerPos.y) {
-                        cell.className = 'cell player';
-                        cell.textContent = '😀';
-                    }
-                    gameBoard.appendChild(cell);
-                    gameCells[y][x] = cell;
-                }
-            }
-            startTime = Date.now();
-            if (timeCounter) clearInterval(timeCounter);
-            timeCounter = setInterval(() => {
-                currentTime = Math.floor((Date.now() - startTime) / 1000);
-                document.getElementById('time').textContent = currentTime;
+            const timer = setInterval(() => {
+                if (!gameActive) { clearInterval(timer); return; }
+                timeLeft--;
+                document.getElementById('time-left').textContent = timeLeft;
+                if (timeLeft <= 0) endGame();
             }, 1000);
         }
 
-        // ===================== 玩家移动逻辑 =====================
-        function movePlayer(dx, dy) {
-            const newX = playerPos.x + dx;
-            const newY = playerPos.y + dy;
+        function initPlayer(pId) {
+            const p = players[pId];
+            p.word = WORD_POOL[matchLength][Math.floor(Math.random() * WORD_POOL[matchLength].length)];
+            p.finishedIndices = [];
+            p.boxes = {};
+            p.pos = {x: 5, y: 5};
+            document.getElementById(`${pId}-word-display`).textContent = p.word;
 
-            if (newX < 0 || newX >= GAME_CONFIG.cols || newY < 0 || newY >= GAME_CONFIG.rows) return;
+            const letters = p.word.split('');
+            letters.forEach((char, idx) => {
+                let rx, ry;
+                let isInvalid = true;
+                while (isInvalid) {
+                    rx = Math.floor(Math.random() * (CONFIG.cols - 2)) + 1;
+                    ry = Math.floor(Math.random() * (CONFIG.rows - 3)) + 2;
+                    
+                    // 1. 避开出生点 2. 避开已有的箱子 3. 强制箱子之间不相邻 (关键修改：防4*4)
+                    const inCenter = (rx >= 4 && rx <= 6 && ry >= 4 && ry <= 6);
+                    let tooClose = false;
+                    for(let key in p.boxes) {
+                        let [bx, by] = key.split(',').map(Number);
+                        if(Math.abs(bx-rx) <= 1 && Math.abs(by-ry) <= 1) tooClose = true;
+                    }
+                    if (!p.boxes[`${rx},${ry}`] && !inCenter && !tooClose) isInvalid = false;
+                }
+                p.boxes[`${rx},${ry}`] = { char, targetIdx: idx };
+            });
+            render(pId);
+        }
 
-            updatePlayerPosition(newX, newY);
+        function render(pId) {
+            const p = players[pId];
+            const board = document.getElementById(p.boardId);
+            board.innerHTML = '';
+            const startX = Math.floor((CONFIG.cols - p.word.length) / 2);
 
-            if (isGrabbing && grabbedBoxKey) {
-                moveGrabbedBox(dx, dy);
+            for (let y = 0; y < CONFIG.rows; y++) {
+                for (let x = 0; x < CONFIG.cols; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell floor';
+
+                    if (y === 0 && x >= startX && x < startX + p.word.length) {
+                        const idx = x - startX;
+                        cell.classList.add('target');
+                        if (p.finishedIndices.includes(idx)) {
+                            cell.classList.add('on-target');
+                            cell.textContent = p.word[idx];
+                        } else {
+                            cell.textContent = p.word[idx]; // 提示该位置要什么字母
+                        }
+                    }
+
+                    const box = p.boxes[`${x},${y}`];
+                    if (box) {
+                        cell.classList.add('letter-box');
+                        cell.textContent = box.char;
+                    }
+
+                    if (x === p.pos.x && y === p.pos.y) {
+                        cell.classList.add('player', pId === 'p1' ? 'p1-color' : 'p2-color');
+                        cell.textContent = pId === 'p1' ? '👤' : '🤖';
+                    }
+                    board.appendChild(cell);
+                }
             }
         }
 
-        function updatePlayerPosition(newX, newY) {
-            const oldX = playerPos.x;
-            const oldY = playerPos.y;
-            const oldKey = `${oldX},${oldY}`;
-            const oldCell = gameCells[oldY][oldX];
+        function move(pId, dx, dy) {
+            if (!gameActive) return;
+            const p = players[pId];
+            const nx = p.pos.x + dx, ny = p.pos.y + dy;
+            if (nx < 0 || nx >= CONFIG.cols || ny < 0 || ny >= CONFIG.rows) return;
 
-            oldCell.classList.remove('player');
-            oldCell.textContent = '';
-
-            if (letterBoxes[oldKey]) {
-                oldCell.classList.add('letter-box');
-                oldCell.textContent = letterBoxes[oldKey].letter;
-                if (letterBoxes[oldKey].grabbed) oldCell.classList.add('grabbed');
-                if (targetPoints[oldKey] && collectedLetters.includes(letterBoxes[oldKey].letter)) {
-                    oldCell.classList.add('on-target');
-                }
-            } else {
-                if (targetPoints[oldKey]) {
-                    oldCell.classList.add('target');
-                    oldCell.textContent = '?';
-                } else {
-                    oldCell.classList.add('floor');
-                }
-            }
-
-            const newCell = gameCells[newY][newX];
-            newCell.className = 'cell player';
-            newCell.textContent = '😀';
-
-            playerPos.x = newX;
-            playerPos.y = newY;
-        }
-
-        // 移动被抓取的箱子 (修复数据丢失bug)
-        function moveGrabbedBox(dx, dy) {
-            const [boxX, boxY] = grabbedBoxKey.split(',').map(Number);
-            const newBoxX = boxX + dx;
-            const newBoxY = boxY + dy;
-            const newBoxKey = `${newBoxX},${newBoxY}`;
-
-            if (newBoxX < 0 || newBoxX >= GAME_CONFIG.cols || newBoxY < 0 || newBoxY >= GAME_CONFIG.rows) return;
-            if (letterBoxes[newBoxKey] && !letterBoxes[newBoxKey].grabbed) return;
-
-            // 【修复点】先保存当前箱子的字母内容，防止删除后丢失
-            const currentLetter = letterBoxes[grabbedBoxKey].letter;
-
-            // 恢复旧箱子位置
-            const oldBoxCell = gameCells[boxY][boxX];
-            oldBoxCell.classList.remove('letter-box', 'grabbed', 'on-target');
-            
-            if (boxX !== playerPos.x || boxY !== playerPos.y) {
-                oldBoxCell.textContent = '';
-                if (targetPoints[grabbedBoxKey]) {
-                    oldBoxCell.classList.add('target');
-                    oldBoxCell.textContent = '?';
-                } else {
-                    oldBoxCell.classList.add('floor');
-                }
-            }
-
-            // 更新数据：删除旧位置，添加到新位置
-            delete letterBoxes[grabbedBoxKey];
-            letterBoxes[newBoxKey] = {
-                letter: currentLetter, // 使用保存的字母
-                grabbed: true
-            };
-            
-            // 渲染新箱子位置
-            const isPlayerHere = (newBoxX === playerPos.x && newBoxY === playerPos.y);
-
-            if (!isPlayerHere) {
-                const newBoxCell = gameCells[newBoxY][newBoxX];
-                newBoxCell.className = 'cell letter-box grabbed'; 
-                newBoxCell.textContent = currentLetter;
+            const boxKey = `${nx},${ny}`;
+            if (p.boxes[boxKey]) {
+                const bnx = nx + dx, bny = ny + dy;
                 
-                if (targetPoints[newBoxKey]) {
-                    newBoxCell.classList.add('on-target');
+                // 推入顶部的逻辑
+                if (bny === 0) {
+                    const startX = Math.floor((CONFIG.cols - p.word.length) / 2);
+                    const targetIdx = bnx - startX;
+                    const box = p.boxes[boxKey];
+                    
+                    // 核心修改：只要字母对应且该位置没被填，就可以推入
+                    const isCorrectSlot = bnx >= startX && bnx < startX + p.word.length;
+                    const isCorrectChar = isCorrectSlot && (box.char === p.word[targetIdx]);
+                    const isAlreadyFilled = p.finishedIndices.includes(targetIdx);
+
+                    if (!isCorrectChar || isAlreadyFilled) return; // 推不动
+
+                    // 成功推入
+                    delete p.boxes[boxKey];
+                    p.finishedIndices.push(targetIdx);
+                    if (p.finishedIndices.length === p.word.length) {
+                        p.score++;
+                        document.getElementById(`${pId}-score`).textContent = p.score;
+                        setTimeout(() => initPlayer(pId), 400);
+                        return;
+                    }
+                } else {
+                    // 常规移动检查
+                    if (bnx < 0 || bnx >= CONFIG.cols || bny < 0 || bny >= CONFIG.rows || p.boxes[`${bnx},${bny}`]) return;
+                    const boxData = p.boxes[boxKey];
+                    delete p.boxes[boxKey];
+                    p.boxes[`${bnx},${bny}`] = boxData;
                 }
             }
-            
-            grabbedBoxKey = newBoxKey;
+            p.pos.x = nx; p.pos.y = ny;
+            render(pId);
         }
 
-        // ===================== 事件监听 =====================
-        document.addEventListener('keydown', (e) => {
-            if (document.getElementById('next-level-modal').style.display === 'block' ||
-                document.getElementById('success-modal').style.display === 'block') {
-                return;
-            }
-            switch(e.key) {
-                case 'ArrowUp': movePlayer(0, -1); e.preventDefault(); break;
-                case 'ArrowDown': movePlayer(0, 1); e.preventDefault(); break;
-                case 'ArrowLeft': movePlayer(-1, 0); e.preventDefault(); break;
-                case 'ArrowRight': movePlayer(1, 0); e.preventDefault(); break;
-                case ' ': 
-                    e.preventDefault();
-                    if (!isGrabbing) grabBox();
-                    break;
-            }
+        window.addEventListener('keydown', e => {
+            const k = e.key.toLowerCase();
+            const p1Keys = { 'w': [0,-1], 's': [0,1], 'a': [-1,0], 'd': [1,0] };
+            const p2Keys = { 'ArrowUp': [0,-1], 'ArrowDown': [0,1], 'ArrowLeft': [-1,0], 'ArrowRight': [1,0] };
+            if (p1Keys[k]) move('p1', ...p1Keys[k]);
+            if (p2Keys[e.key]) move('p2', ...p2Keys[e.key]);
         });
 
-        document.addEventListener('keyup', (e) => {
-            if (e.key === ' ') {
-                releaseBox();
-            }
-        });
-
-        document.getElementById('start-btn').addEventListener('click', () => {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            totalScore = 0;
-            initGame(1);
-        });
-
-        document.getElementById('next-btn').addEventListener('click', () => {
-            document.getElementById('next-level-modal').style.display = 'none';
-            initGame(currentLevel + 1);
-        });
-
-        document.getElementById('restart-btn').addEventListener('click', () => {
-            document.getElementById('success-modal').style.display = 'none';
-            totalScore = 0;
-            initGame(1);
-        });
+        function endGame() {
+            gameActive = false;
+            document.getElementById('result-modal').style.display = 'block';
+            const winner = players.p1.score > players.p2.score ? "P1 胜利!" : players.p2.score > players.p1.score ? "P2 胜利!" : "平局!";
+            document.getElementById('winner-msg').textContent = winner;
+            document.getElementById('final-stats').innerHTML = `P1 得分: ${players.p1.score} <br> P2 得分: ${players.p2.score}`;
+        }
     </script>
 </body>
 </html>
