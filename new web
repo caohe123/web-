@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D字母闯关 - 纯净版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        /* ===== 关卡选择样式（新增） ===== */
+        #level-select h2 {
+            font-size: 26px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        #level-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        #level-buttons button {
+            width: 140px;
+            height: 60px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #6dd5fa, #3498db);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            transition: all 0.25s ease;
+        }
+
+        #level-buttons button:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+
+        body {
+            background: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* 开始界面 */
+        #start-screen {
+            text-align: center;
+            padding: 50px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            max-width: 700px;
+        }
+
+          #start-screen h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 36px;
+        }
+
+        /* 游戏说明样式 */
+        #game-instructions {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+        }
+
+        #game-instructions h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        #game-instructions ul {
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        #game-instructions li {
+            margin: 8px 0;
+            color: #34495e;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        #game-instructions li::before {
+            content: "✓";
+            color: #2ecc71;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #start-btn {
+            background: #3498db;
+            color: #fff;
+        }
+
+        #start-btn:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+
+        /* 游戏容器 */
+        #game-container {
+            display: none;
+            text-align: center;
+        }
+
+        /* 游戏信息面板 */
+        #game-info {
+            background: #2c3e50;
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            min-width: 500px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-item {
+            margin: 0 10px;
+        }
+
+        #target-word {
+            color: #f1c40f;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* 游戏面板 */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            grid-template-rows: repeat(12, 40px);
+            gap: 2px;
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        }
+
+        /* 格子样式 */
+        .cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            user-select: none;
+        }
+
+        .floor {
+            background: #bdc3c7;
+        }
+
+        /* 目标区 */
+        .target {
+            background: #f1c40f;
+            border: 2px dashed #e67e22;
+            color: #d35400;
+        }
+
+        /* 玩家 */
+        .player {
+            background: #3498db;
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* 字母箱子 */
+        .letter-box {
+            background: #e74c3c;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+
+        .letter-box.grabbed {
+            background: #9b59b6;
+            box-shadow: 0 0 10px #9b59b6;
+            z-index: 15;
+        }
+
+        .letter-box.on-target {
+            background: #2ecc71;
+        }
+
+              /* 弹窗样式 */
+        #next-level-modal, #success-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            text-align: center;
+            display: none;
+            z-index: 100;
+        }
+
+        #success-modal h2 {
+            color: #27ae60;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        #final-score {
+            font-size: 28px;
+            color: #e67e22;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+<!-- 开始界面 -->
+<div id="start-screen">
+
+    <h1>2D字母闯关 - 纯净版</h1>
+
+    <div id="game-instructions">
+        <h3>🎮 游戏玩法说明</h3>
+        <ul>
+            <li>方向键 ↑↓←→ 控制角色移动（可直接穿过字母）</li>
+            <li>空格键：优先抓取脚下箱子，若无则抓取周围箱子</li>
+            <li>抓取的箱子会跟随角色移动</li>
+            <li>当角色与箱子重合时，角色显示优先（箱子被遮挡）</li>
+            <li>按目标单词顺序将字母箱子放入黄色目标区</li>
+        </ul>
+    </div>
+
+    <button id="start-btn" class="btn">开始游戏</button>
+    <!-- 关卡选择界面（新增） -->
+    <div id="level-select" style="display:none; text-align:center; margin-top:30px;">
+        <h2 style="margin-bottom:20px;">请选择关卡</h2>
+        <div id="level-buttons"></div>
+    </div>
+</div>
+
+<!-- ===== 暂停菜单（新增） ===== -->
+<div id="pause-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h2 style="margin-bottom:20px;">游戏已暂停</h2>
+        <button id="resume-btn" class="btn">继续游戏</button>
+        <button id="exit-btn" class="btn" style="margin-top:10px;">退到主界面</button>
+    </div>
+</div>
+<!-- 游戏容器 -->
+<div id="game-container">
+    <div id="game-info">
+        <div class="info-item">关卡：<span id="level">1</span></div>
+        <div class="info-item">目标：<span id="target-word">APPLE</span></div>
+        <div class="info-item">分数：<span id="score">0</span></div>
+        <div class="info-item">用时：<span id="time">0</span>s</div>
+    </div>
+    <div id="game-board"></div>
+</div>
+
+<!-- 下一关弹窗 -->
+<div id="next-level-modal">
+    <h3>恭喜通关本关！</h3>
+    <div>本关得分：<span id="next-score">0</span></div>
+    <button id="next-btn" class="btn">下一关</button>
+</div>
+
+<!-- 通关弹窗 -->
+<div id="success-modal">
+    <h2>恭喜通关所有关卡！🎉</h2>
+    <div>最终得分：<span id="final-score">0</span></div>
+    <button id="restart-btn" class="btn">重新开始</button>
+</div>
+
+<script>
+    // ===== 新增：ESC 暂停/继续 =====
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+
+        // 游戏未开始 or 通关弹窗打开时，不响应
+        if (document.getElementById('game-container').style.display !== 'block') return;
+
+        if (!isPaused) {
+            pauseGame();
+        } else {
+            resumeGame();
+        }
+    });
+
+    // ===================== 核心配置 =====================
+    const WORD_LIBRARY = [
+        { word: "APPLE", length: 5 },
+        { word: "BANANA", length: 6 },
+        { word: "ORANGE", length: 6 },
+        { word: "GRAPE", length: 5 },
+        { word: "PEAR", length: 4 }
+    ];
+    // ===== 新增：生成关卡选择按钮 =====
+
+    function buildLevelSelect() {
+        const container = document.getElementById('level-buttons');
+        container.innerHTML = '';
+
+        WORD_LIBRARY.forEach((item, index) => {
+            const btn = document.createElement('button');
+            btn.textContent = `第 ${index + 1} 关`;
+
+            btn.onclick = () => {
+                document.getElementById('level-select').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                totalScore = 0;
+                initGame(index + 1);
+            };
+
+            container.appendChild(btn);
+        });
+    }
+
+    // ===== 单词中文释义（新增，不影响原逻辑）=====
+    const WORD_MEANINGS = {
+        APPLE: "苹果",
+        BANANA: "香蕉",
+        ORANGE: "橙子",
+        GRAPE: "葡萄",
+        PEAR: "梨"
+    };
+    function pauseGame() {
+        if (isPaused) return;
+
+        isPaused = true;
+
+        // ✅ 记录已用时间
+        pausedTime = Date.now() - startTime;
+
+        // ✅ 停止计时器
+        clearInterval(timeCounter);
+
+        document.getElementById('pause-modal').style.display = 'block';
+    }
+
+
+    function resumeGame() {
+        if (!isPaused) return;
+
+        isPaused = false;
+
+        // ✅ 恢复开始时间（从暂停点继续）
+        startTime = Date.now() - pausedTime;
+
+        // ✅ 重新启动计时器
+        timeCounter = setInterval(() => {
+            currentTime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('time').textContent = currentTime;
+        }, 1000);
+
+        document.getElementById('pause-modal').style.display = 'none';
+    }
+
+
+    // ===== 单词发音（新增）=====
+    function speakWord(word) {
+        if (!window.speechSynthesis) return;
+        const utter = new SpeechSynthesisUtterance(word);
+        utter.lang = "en-US";
+        utter.rate = 0.9;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utter);
+    }
+    const GAME_CONFIG = {
+        rows: 12,
+        cols: 15,
+        playerStartPos: { x: 7, y: 5 },
+        grabRange: 1,
+        targetAreaY: 2
+    };
+
+    // ===================== 全局变量 =====================
+    let currentLevel = 1;
+    let totalScore = 0;
+    let startTime = 0;
+    let timeCounter = null;
+    let currentTime = 0;
+    let pausedTime = 0; // ← 记录暂停时已用时间
+    let playerPos = {};
+    let currentWord = "";
+    let currentWordLength = 0;
+    let collectedLetters = [];
+    let targetPoints = {};
+    let gameCells = [];
+
+    let letterBoxes = {};
+    let isGrabbing = false;
+    let grabbedBoxKey = null;
+    let isPaused = false;
+
+
+    // ===================== 核心功能：抓取/释放 =====================
+    function grabBox() {
+        if (isGrabbing) return;
+
+        const currentKey = `${playerPos.x},${playerPos.y}`;
+
+        // 1. 【优先】检查脚下是否有箱子
+        if (letterBoxes[currentKey] && !letterBoxes[currentKey].grabbed) {
+            grabbedBoxKey = currentKey;
+            letterBoxes[grabbedBoxKey].grabbed = true;
+            isGrabbing = true;
+
+            // 视觉反馈
+            gameCells[playerPos.y][playerPos.x].classList.add("grabbed");
+            return;
+        }
+
+        // 2. 【备选】搜索周围
+        const nearbyBoxes = getNearbyBoxes(playerPos, GAME_CONFIG.grabRange);
+        if (nearbyBoxes.length === 0) return;
+
+        grabbedBoxKey = nearbyBoxes[0];
+        letterBoxes[grabbedBoxKey].grabbed = true;
+        isGrabbing = true;
+
+        const [x, y] = grabbedBoxKey.split(',').map(Number);
+        gameCells[y][x].classList.add("grabbed");
+    }
+
+    function releaseBox() {
+        if (!isGrabbing || !grabbedBoxKey) return;
+        letterBoxes[grabbedBoxKey].grabbed = false;
+        isGrabbing = false;
+
+        const [x, y] = grabbedBoxKey.split(',').map(Number);
+
+        if (playerPos.x !== x || playerPos.y !== y) {
+            gameCells[y][x].classList.remove("grabbed");
+        } else {
+            // 玩家站在这，保持 player 样式，但数据已放下
+            gameCells[y][x].classList.remove("grabbed");
+        }
+
+        checkTargetArea(grabbedBoxKey);
+        grabbedBoxKey = null;
+    }
+
+    function getNearbyBoxes(pos, range) {
+        const boxes = [];
+        const { x: px, y: py } = pos;
+        for (let y = py - range; y <= py + range; y++) {
+            for (let x = px - range; x <= px + range; x++) {
+                if (x < 0 || x >= GAME_CONFIG.cols || y < 0 || y >= GAME_CONFIG.rows) continue;
+                if (x === px && y === py) continue;
+
+                const key = `${x},${y}`;
+                if (letterBoxes[key] && !letterBoxes[key].grabbed) {
+                    boxes.push(key);
+                }
+            }
+        }
+        return boxes;
+    }
+
+    function generateLetterPositions() {
+        letterBoxes = {};
+        const letters = currentWord.split('');
+        const candidatePositions = [];
+        const playerArea = [
+            {x: 4, y: 4}, {x: 5, y: 6}, {x: 8, y: 4}, {x: 9, y: 6},
+            {x: 3, y: 7}, {x: 10, y: 7}, {x: 6, y: 3}, {x: 7, y: 8}
+        ];
+        const targetArea = getTargetArea();
+        targetArea.forEach(pos => {
+            candidatePositions.push({x: pos.x - 2, y: pos.y + 2});
+            candidatePositions.push({x: pos.x + 2, y: pos.y + 2});
+            candidatePositions.push({x: pos.x, y: pos.y + 3});
+        });
+
+        const allPositions = [...playerArea, ...targetArea, ...candidatePositions];
+        const uniquePositions = Array.from(
+            new Map(allPositions.map(pos => [`${pos.x},${pos.y}`, pos])).values()
+        );
+
+        letters.forEach((letter, index) => {
+            const pos = uniquePositions[index % uniquePositions.length];
+            const key = `${pos.x},${pos.y}`;
+            letterBoxes[key] = {
+                letter: letter,
+                grabbed: false
+            };
+        });
+    }
+
+    function getTargetArea() {
+        targetPoints = {};
+        const startX = Math.floor((GAME_CONFIG.cols - currentWordLength) / 2);
+        const area = [];
+        for (let i = 0; i < currentWordLength; i++) {
+            const x = startX + i;
+            const y = GAME_CONFIG.targetAreaY;
+            area.push({x, y});
+            targetPoints[`${x},${y}`] = {
+                letter: currentWord[i],
+                index: i
+            };
+        }
+        return area;
+    }
+
+    function checkTargetArea(boxKey) {
+        const [x, y] = boxKey.split(',').map(Number);
+        const targetKey = `${x},${y}`;
+        if (targetPoints[targetKey]) {
+            const box = letterBoxes[boxKey];
+            const target = targetPoints[targetKey];
+            if (box.letter === target.letter && collectedLetters.length === target.index) {
+                collectedLetters.push(box.letter);
+                if (playerPos.x !== x || playerPos.y !== y) {
+                    gameCells[y][x].classList.add("on-target");
+                }
+                if (collectedLetters.join('') === currentWord) {
+                    clearInterval(timeCounter);
+                    // ===== 新增：显示中文 + 发音 =====
+                    const meaning = WORD_MEANINGS[currentWord] || "（暂无释义）";
+                    const meaningText = `${currentWord} ：${meaning}`;
+                    document.getElementById('next-score').insertAdjacentHTML(
+                        "beforebegin",
+                        `<div style="margin:10px 0;font-size:18px;color:#34495e;">${meaningText}</div>`
+                    );
+                    speakWord(currentWord);
+                    calculateScore();
+                }
+            }
+        }
+    }
+
+    function calculateScore() {
+        const baseScore = 1000;
+        const speedScore = Math.max(0, 800 - currentTime * 10);
+        const levelScore = baseScore + speedScore;
+        totalScore += levelScore;
+        document.getElementById('score').textContent = totalScore;
+        if (currentLevel >= WORD_LIBRARY.length) {
+            document.getElementById('final-score').textContent = totalScore;
+            setTimeout(() => document.getElementById('success-modal').style.display = 'block', 500);
+        } else {
+            document.getElementById('next-score').textContent = levelScore;
+            setTimeout(() => document.getElementById('next-level-modal').style.display = 'block', 500);
+        }
+    }
+
+    function initGame(level = 1) {
+        collectedLetters = [];
+        targetPoints = {};
+        gameCells = [];
+        currentTime = 0;
+        isGrabbing = false;
+        grabbedBoxKey = null;
+        pausedTime = 0; // ← 防止上一关影响
+        currentLevel = level;
+        const wordData = WORD_LIBRARY[level - 1];
+        currentWord = wordData.word;
+        currentWordLength = wordData.length;
+        document.getElementById('level').textContent = currentLevel;
+        document.getElementById('target-word').textContent = currentWord;
+        document.getElementById('time').textContent = currentTime;
+        document.getElementById('score').textContent = totalScore;
+        playerPos = {...GAME_CONFIG.playerStartPos};
+        generateLetterPositions();
+        getTargetArea();
+        const gameBoard = document.getElementById('game-board');
+        gameBoard.innerHTML = '';
+        for (let y = 0; y < GAME_CONFIG.rows; y++) {
+            gameCells[y] = [];
+            for (let x = 0; x < GAME_CONFIG.cols; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell floor';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                if (targetPoints[`${x},${y}`]) {
+                    cell.classList.remove('floor');
+                    cell.classList.add('target');
+                    cell.textContent = '?';
+                }
+                const boxKey = `${x},${y}`;
+                if (letterBoxes[boxKey]) {
+                    cell.classList.add('letter-box');
+                    cell.textContent = letterBoxes[boxKey].letter;
+                }
+                if (x === playerPos.x && y === playerPos.y) {
+                    cell.className = 'cell player';
+                    cell.textContent = '😀';
+                }
+                gameBoard.appendChild(cell);
+                gameCells[y][x] = cell;
+            }
+        }
+        startTime = Date.now();
+        if (timeCounter) clearInterval(timeCounter);
+        timeCounter = setInterval(() => {
+            currentTime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('time').textContent = currentTime;
+        }, 1000);
+    }
+
+    // ===================== 玩家移动逻辑 =====================
+    function movePlayer(dx, dy) {
+        if (isPaused) return;
+        const newX = playerPos.x + dx;
+        const newY = playerPos.y + dy;
+
+        if (newX < 0 || newX >= GAME_CONFIG.cols || newY < 0 || newY >= GAME_CONFIG.rows) return;
+
+        updatePlayerPosition(newX, newY);
+
+        if (isGrabbing && grabbedBoxKey) {
+            moveGrabbedBox(dx, dy);
+        }
+    }
+
+    function updatePlayerPosition(newX, newY) {
+        const oldX = playerPos.x;
+        const oldY = playerPos.y;
+        const oldKey = `${oldX},${oldY}`;
+        const oldCell = gameCells[oldY][oldX];
+
+        oldCell.classList.remove('player');
+        oldCell.textContent = '';
+
+        if (letterBoxes[oldKey]) {
+            oldCell.classList.add('letter-box');
+            oldCell.textContent = letterBoxes[oldKey].letter;
+            if (letterBoxes[oldKey].grabbed) oldCell.classList.add('grabbed');
+            if (targetPoints[oldKey] && collectedLetters.includes(letterBoxes[oldKey].letter)) {
+                oldCell.classList.add('on-target');
+            }
+        } else {
+            if (targetPoints[oldKey]) {
+                oldCell.classList.add('target');
+                oldCell.textContent = '?';
+            } else {
+                oldCell.classList.add('floor');
+            }
+        }
+
+        const newCell = gameCells[newY][newX];
+        newCell.className = 'cell player';
+        newCell.textContent = '😀';
+
+        playerPos.x = newX;
+        playerPos.y = newY;
+    }
+
+    // 移动被抓取的箱子 (修复数据丢失bug)
+    function moveGrabbedBox(dx, dy) {
+        const [boxX, boxY] = grabbedBoxKey.split(',').map(Number);
+        const newBoxX = boxX + dx;
+        const newBoxY = boxY + dy;
+        const newBoxKey = `${newBoxX},${newBoxY}`;
+
+        if (newBoxX < 0 || newBoxX >= GAME_CONFIG.cols || newBoxY < 0 || newBoxY >= GAME_CONFIG.rows) return;
+        if (letterBoxes[newBoxKey] && !letterBoxes[newBoxKey].grabbed) return;
+
+        // 【修复点】先保存当前箱子的字母内容，防止删除后丢失
+        const currentLetter = letterBoxes[grabbedBoxKey].letter;
+
+        // 恢复旧箱子位置
+        const oldBoxCell = gameCells[boxY][boxX];
+        oldBoxCell.classList.remove('letter-box', 'grabbed', 'on-target');
+
+        if (boxX !== playerPos.x || boxY !== playerPos.y) {
+            oldBoxCell.textContent = '';
+            if (targetPoints[grabbedBoxKey]) {
+                oldBoxCell.classList.add('target');
+                oldBoxCell.textContent = '?';
+            } else {
+                oldBoxCell.classList.add('floor');
+            }
+        }
+
+        // 更新数据：删除旧位置，添加到新位置
+        delete letterBoxes[grabbedBoxKey];
+        letterBoxes[newBoxKey] = {
+            letter: currentLetter, // 使用保存的字母
+            grabbed: true
+        };
+
+        // 渲染新箱子位置
+        const isPlayerHere = (newBoxX === playerPos.x && newBoxY === playerPos.y);
+
+        if (!isPlayerHere) {
+            const newBoxCell = gameCells[newBoxY][newBoxX];
+            newBoxCell.className = 'cell letter-box grabbed';
+            newBoxCell.textContent = currentLetter;
+
+            if (targetPoints[newBoxKey]) {
+                newBoxCell.classList.add('on-target');
+            }
+        }
+
+        grabbedBoxKey = newBoxKey;
+    }
+
+    // ===================== 事件监听 =====================
+    document.addEventListener('keydown', (e) => {
+        if (document.getElementById('next-level-modal').style.display === 'block' ||
+            document.getElementById('success-modal').style.display === 'block') {
+            return;
+        }
+        switch(e.key) {
+            case 'ArrowUp': movePlayer(0, -1); e.preventDefault(); break;
+            case 'ArrowDown': movePlayer(0, 1); e.preventDefault(); break;
+            case 'ArrowLeft': movePlayer(-1, 0); e.preventDefault(); break;
+            case 'ArrowRight': movePlayer(1, 0); e.preventDefault(); break;
+            case ' ':
+                e.preventDefault();
+                if (!isGrabbing) grabBox();
+                break;
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.key === ' ') {
+            releaseBox();
+        }
+    });
+
+    // 继续游戏
+    document.getElementById('resume-btn').addEventListener('click', () => {
+        resumeGame();
+    });
+    document.getElementById('start-btn').addEventListener('click', () => {
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('game-instructions').style.display = 'none';
+        document.getElementById('level-select').style.display = 'block';
+        buildLevelSelect();
+    });
+
+    // 退到主界面
+    document.getElementById('exit-btn').addEventListener('click', () => {
+        isPaused = false;
+
+        document.getElementById('pause-modal').style.display = 'none';
+        document.getElementById('game-container').style.display = 'none';
+
+        // 回到开始界面
+        document.getElementById('start-btn').style.display = 'inline-block';
+        document.getElementById('game-instructions').style.display = 'block';
+        document.getElementById('level-select').style.display = 'none';
+    });
+
+
+    // ===== 新增：清空“通关本关”弹窗里的中英文 =====
+    const modal = document.getElementById('next-level-modal');
+    modal.querySelectorAll('.word-meaning').forEach(el => el.remove());
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+        document.getElementById('next-level-modal').style.display = 'none';
+        initGame(currentLevel + 1);
+    });
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+        document.getElementById('success-modal').style.display = 'none';
+        totalScore = 0;
+        initGame(1);
+    });
+</script>
+</body>
+</html>
